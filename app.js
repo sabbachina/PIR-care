@@ -1,4 +1,4 @@
-// PIR & CARE Application Logic
+// PIR & CARE Application Logic - FIXED FOR MOBILE
 
 // Global state
 let currentStep = 1;
@@ -10,6 +10,7 @@ let formData = {
     baggage: {},
     signature: null
 };
+let signaturePad = null; // Global reference
 
 // DOM Ready
 document.addEventListener('DOMContentLoaded', function() {
@@ -25,7 +26,6 @@ function initializeApp() {
     setupNavigationListeners();
     setupFormListeners();
     setupLanguageListeners();
-    setupSignaturePad();
     
     // Show home section by default
     showSection('homeSection');
@@ -67,12 +67,33 @@ function setupNavigationListeners() {
                 currentStep++;
                 showStep(currentStep);
                 updateProgress();
+                
+                // Initialize signature pad when reaching step 5
+                if (currentStep === 5) {
+                    setTimeout(() => {
+                        setupSignaturePad();
+                    }, 100);
+                }
             }
         }
     });
     
     // Submit button
     document.getElementById('submitBtn')?.addEventListener('click', () => {
+        // Save signature before validation
+        if (signaturePad && signaturePad.canvas) {
+            const canvas = signaturePad.canvas;
+            const ctx = signaturePad.ctx;
+            
+            // Check if canvas has any drawing
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const hasDrawing = imageData.data.some(channel => channel !== 0);
+            
+            if (hasDrawing) {
+                formData.signature = canvas.toDataURL();
+            }
+        }
+        
         if (validateStep(currentStep)) {
             submitPIR();
         }
@@ -80,7 +101,7 @@ function setupNavigationListeners() {
     
     // Compensation request button
     document.getElementById('requestCompensation')?.addEventListener('click', () => {
-        alert(translate('compensationTitle', getStoredLanguage()));
+        showToast(translate('compensationTitle', getStoredLanguage()));
     });
 }
 
@@ -100,6 +121,7 @@ function setupFormListeners() {
     document.getElementById('baggagePhoto')?.addEventListener('change', function(e) {
         if (e.target.files.length > 0) {
             formData.baggage.photos = Array.from(e.target.files);
+            showToast('Foto caricate con successo!');
         }
     });
     
@@ -107,6 +129,7 @@ function setupFormListeners() {
     const inputs = document.querySelectorAll('.form-input');
     inputs.forEach(input => {
         input.addEventListener('change', saveFormData);
+        input.addEventListener('blur', saveFormData);
     });
 }
 
@@ -130,6 +153,7 @@ function setupLanguageListeners() {
             const selectedLang = this.getAttribute('data-lang');
             updatePageLanguage(selectedLang);
             langModal.classList.remove('active');
+            showToast('Lingua aggiornata!');
         });
     });
     
@@ -141,10 +165,81 @@ function setupLanguageListeners() {
     });
 }
 
+// Toast notification for better UX
+function showToast(message, duration = 3000) {
+    // Remove existing toast
+    const existingToast = document.querySelector('.toast-notification');
+    if (existingToast) {
+        existingToast.remove();
+    }
+    
+    // Create toast
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification';
+    toast.textContent = message;
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #333;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 25px;
+        font-size: 14px;
+        z-index: 10000;
+        animation: slideUp 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        max-width: 90%;
+        text-align: center;
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Add animation
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+    `;
+    if (!document.getElementById('toast-style')) {
+        style.id = 'toast-style';
+        document.head.appendChild(style);
+    }
+    
+    // Remove after duration
+    setTimeout(() => {
+        toast.style.animation = 'slideUp 0.3s ease reverse';
+        setTimeout(() => {
+            toast.remove();
+        }, 300);
+    }, duration);
+}
+
 // File Upload Handler
 function handleFileUpload(event, type, containerId) {
     const file = event.target.files[0];
     if (!file) return;
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+        showToast('Per favore carica un\'immagine valida');
+        return;
+    }
+    
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        showToast('File troppo grande. Massimo 5MB');
+        return;
+    }
     
     const container = document.getElementById(containerId);
     const uploadContent = container.querySelector('.upload-content');
@@ -152,6 +247,7 @@ function handleFileUpload(event, type, containerId) {
     
     // Show loading
     showAIExtraction();
+    showToast('Caricamento documento...');
     
     // Simulate file reading
     const reader = new FileReader();
@@ -168,12 +264,20 @@ function handleFileUpload(event, type, containerId) {
             uploadPreview.style.display = 'block';
             uploadPreview.querySelector('img').src = e.target.result;
             
+            showToast('Documento caricato!');
+            
             // Simulate AI extraction
             setTimeout(() => {
                 extractDataFromDocument(type);
                 hideAIExtraction();
-            }, 2000);
+                showToast('Dati estratti automaticamente!');
+            }, 1500);
         }, 500);
+    };
+    
+    reader.onerror = function() {
+        showToast('Errore nel caricamento del file');
+        hideAIExtraction();
     };
     
     reader.readAsDataURL(file);
@@ -244,6 +348,9 @@ function showStep(step) {
         nextBtn.style.display = 'inline-flex';
         submitBtn.style.display = 'none';
     }
+    
+    // Scroll to top of form
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function updateProgress() {
@@ -255,7 +362,7 @@ function updateProgress() {
     currentStepEl.textContent = currentStep;
 }
 
-// Form Validation
+// Form Validation - IMPROVED WITH TOAST
 function validateStep(step) {
     let isValid = true;
     let errorMessage = '';
@@ -265,7 +372,7 @@ function validateStep(step) {
         case 1:
             if (!formData.documents.boardingPass || !formData.documents.idDoc) {
                 isValid = false;
-                errorMessage = 'Carica entrambi i documenti';
+                errorMessage = lang === 'en' ? 'Upload both documents' : 'Carica entrambi i documenti';
             }
             break;
             
@@ -275,9 +382,16 @@ function validateStep(step) {
                 const value = document.getElementById(field)?.value;
                 if (!value || value.trim() === '') {
                     isValid = false;
-                    errorMessage = `Compila tutti i campi obbligatori`;
+                    errorMessage = lang === 'en' ? 'Fill in all required fields' : 'Compila tutti i campi obbligatori';
                     break;
                 }
+            }
+            
+            // Validate email
+            const email = document.getElementById('email')?.value;
+            if (email && !email.includes('@')) {
+                isValid = false;
+                errorMessage = lang === 'en' ? 'Invalid email address' : 'Indirizzo email non valido';
             }
             break;
             
@@ -287,7 +401,7 @@ function validateStep(step) {
                 const value = document.getElementById(field)?.value;
                 if (!value || value.trim() === '') {
                     isValid = false;
-                    errorMessage = `Compila tutti i campi obbligatori`;
+                    errorMessage = lang === 'en' ? 'Fill in all required fields' : 'Compila tutti i campi obbligatori';
                     break;
                 }
             }
@@ -298,25 +412,43 @@ function validateStep(step) {
             const baggageColor = document.getElementById('baggageColor')?.value;
             if (!baggageType || !baggageColor) {
                 isValid = false;
-                errorMessage = `Fornisci almeno tipo e colore del bagaglio`;
+                errorMessage = lang === 'en' ? 'Provide at least type and color of baggage' : 'Fornisci almeno tipo e colore del bagaglio';
             }
             break;
             
         case 5:
+            // Check signature
             if (!formData.signature) {
-                isValid = false;
-                errorMessage = `Firma il documento`;
+                // Try to get it from canvas
+                if (signaturePad && signaturePad.canvas) {
+                    const canvas = signaturePad.canvas;
+                    const ctx = signaturePad.ctx;
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const hasDrawing = imageData.data.some(channel => channel !== 0);
+                    
+                    if (hasDrawing) {
+                        formData.signature = canvas.toDataURL();
+                    } else {
+                        isValid = false;
+                        errorMessage = lang === 'en' ? 'Please sign the document' : '⚠️ Firma il documento nel riquadro sopra';
+                    }
+                } else {
+                    isValid = false;
+                    errorMessage = lang === 'en' ? 'Please sign the document' : '⚠️ Firma il documento nel riquadro sopra';
+                }
             }
+            
+            // Check terms
             const termsAccept = document.getElementById('termsAccept')?.checked;
-            if (!termsAccept) {
+            if (!termsAccept && isValid) {
                 isValid = false;
-                errorMessage = `Accetta i termini e condizioni`;
+                errorMessage = lang === 'en' ? 'Accept terms and conditions' : '⚠️ Accetta i termini e condizioni';
             }
             break;
     }
     
     if (!isValid) {
-        alert(errorMessage);
+        showToast(errorMessage, 4000);
     }
     
     return isValid;
@@ -362,101 +494,152 @@ function populateReview() {
     
     // Personal data review
     const reviewPersonal = document.getElementById('reviewPersonal');
-    reviewPersonal.innerHTML = `
-        <div class="review-item">
-            <div class="review-item-label">${translate('firstName', lang)}</div>
-            <div class="review-item-value">${formData.personal.firstName}</div>
-        </div>
-        <div class="review-item">
-            <div class="review-item-label">${translate('lastName', lang)}</div>
-            <div class="review-item-value">${formData.personal.lastName}</div>
-        </div>
-        <div class="review-item">
-            <div class="review-item-label">${translate('email', lang)}</div>
-            <div class="review-item-value">${formData.personal.email}</div>
-        </div>
-        <div class="review-item">
-            <div class="review-item-label">${translate('phone', lang)}</div>
-            <div class="review-item-value">${formData.personal.phone}</div>
-        </div>
-        <div class="review-item">
-            <div class="review-item-label">${translate('address', lang)}</div>
-            <div class="review-item-value">${formData.personal.address}</div>
-        </div>
-    `;
+    if (reviewPersonal) {
+        reviewPersonal.innerHTML = `
+            <div class="review-item">
+                <div class="review-item-label">${translate('firstName', lang)}</div>
+                <div class="review-item-value">${formData.personal.firstName}</div>
+            </div>
+            <div class="review-item">
+                <div class="review-item-label">${translate('lastName', lang)}</div>
+                <div class="review-item-value">${formData.personal.lastName}</div>
+            </div>
+            <div class="review-item">
+                <div class="review-item-label">${translate('email', lang)}</div>
+                <div class="review-item-value">${formData.personal.email}</div>
+            </div>
+            <div class="review-item">
+                <div class="review-item-label">${translate('phone', lang)}</div>
+                <div class="review-item-value">${formData.personal.phone}</div>
+            </div>
+        `;
+    }
     
     // Flight data review
     const reviewFlight = document.getElementById('reviewFlight');
-    reviewFlight.innerHTML = `
-        <div class="review-item">
-            <div class="review-item-label">${translate('airline', lang)}</div>
-            <div class="review-item-value">${formData.flight.airline}</div>
-        </div>
-        <div class="review-item">
-            <div class="review-item-label">${translate('flightNumber', lang)}</div>
-            <div class="review-item-value">${formData.flight.flightNumber}</div>
-        </div>
-        <div class="review-item">
-            <div class="review-item-label">${translate('flightDate', lang)}</div>
-            <div class="review-item-value">${formData.flight.flightDate}</div>
-        </div>
-        <div class="review-item">
-            <div class="review-item-label">${translate('pnr', lang)}</div>
-            <div class="review-item-value">${formData.flight.pnr}</div>
-        </div>
-        <div class="review-item">
-            <div class="review-item-label">${translate('departure', lang)}</div>
-            <div class="review-item-value">${formData.flight.departure}</div>
-        </div>
-        <div class="review-item">
-            <div class="review-item-label">${translate('arrival', lang)}</div>
-            <div class="review-item-value">${formData.flight.arrival}</div>
-        </div>
-    `;
+    if (reviewFlight) {
+        reviewFlight.innerHTML = `
+            <div class="review-item">
+                <div class="review-item-label">${translate('airline', lang)}</div>
+                <div class="review-item-value">${formData.flight.airline}</div>
+            </div>
+            <div class="review-item">
+                <div class="review-item-label">${translate('flightNumber', lang)}</div>
+                <div class="review-item-value">${formData.flight.flightNumber}</div>
+            </div>
+            <div class="review-item">
+                <div class="review-item-label">${translate('flightDate', lang)}</div>
+                <div class="review-item-value">${formData.flight.flightDate}</div>
+            </div>
+            <div class="review-item">
+                <div class="review-item-label">${translate('pnr', lang)}</div>
+                <div class="review-item-value">${formData.flight.pnr}</div>
+            </div>
+        `;
+    }
     
     // Baggage data review
     const reviewBaggage = document.getElementById('reviewBaggage');
-    reviewBaggage.innerHTML = `
-        <div class="review-item">
-            <div class="review-item-label">${translate('baggageType', lang)}</div>
-            <div class="review-item-value">${formData.baggage.type}</div>
-        </div>
-        <div class="review-item">
-            <div class="review-item-label">${translate('baggageColor', lang)}</div>
-            <div class="review-item-value">${formData.baggage.color}</div>
-        </div>
-        <div class="review-item">
-            <div class="review-item-label">${translate('baggageBrand', lang)}</div>
-            <div class="review-item-value">${formData.baggage.brand}</div>
-        </div>
-        <div class="review-item">
-            <div class="review-item-label">${translate('baggageDescription', lang)}</div>
-            <div class="review-item-value">${formData.baggage.description}</div>
-        </div>
-    `;
+    if (reviewBaggage) {
+        reviewBaggage.innerHTML = `
+            <div class="review-item">
+                <div class="review-item-label">${translate('baggageType', lang)}</div>
+                <div class="review-item-value">${formData.baggage.type}</div>
+            </div>
+            <div class="review-item">
+                <div class="review-item-label">${translate('baggageColor', lang)}</div>
+                <div class="review-item-value">${formData.baggage.color}</div>
+            </div>
+            <div class="review-item">
+                <div class="review-item-label">${translate('baggageBrand', lang)}</div>
+                <div class="review-item-value">${formData.baggage.brand || 'N/A'}</div>
+            </div>
+        `;
+    }
 }
 
-// Signature Pad Setup
+// Signature Pad Setup - COMPLETELY REWRITTEN FOR MOBILE
 function setupSignaturePad() {
     const canvas = document.getElementById('signaturePad');
-    if (!canvas) return;
+    if (!canvas) {
+        console.error('Signature canvas not found');
+        return;
+    }
     
     const ctx = canvas.getContext('2d');
     let isDrawing = false;
     let lastX = 0;
     let lastY = 0;
     
-    // Set canvas size
-    canvas.width = canvas.offsetWidth;
-    canvas.height = 200;
+    // Store reference globally
+    signaturePad = { canvas, ctx };
+    
+    // Responsive canvas sizing
+    function resizeCanvas() {
+        const container = canvas.parentElement;
+        const rect = container.getBoundingClientRect();
+        
+        // Save current drawing
+        const tempCanvas = document.createElement('canvas');
+        const tempCtx = tempCanvas.getContext('2d');
+        tempCanvas.width = canvas.width;
+        tempCanvas.height = canvas.height;
+        tempCtx.drawImage(canvas, 0, 0);
+        
+        // Resize canvas
+        canvas.width = Math.floor(rect.width - 4); // -4 for border
+        canvas.height = window.innerWidth < 768 ? 150 : 200;
+        
+        // Restore drawing
+        ctx.drawImage(tempCanvas, 0, 0);
+        
+        // Set line style
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+    }
+    
+    // Initial resize
+    resizeCanvas();
+    
+    // Resize on window resize with debounce
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(resizeCanvas, 250);
+    });
+    
+    function getCoordinates(e) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        
+        if (e.touches && e.touches.length > 0) {
+            // Touch event
+            return {
+                x: (e.touches[0].clientX - rect.left) * scaleX,
+                y: (e.touches[0].clientY - rect.top) * scaleY
+            };
+        } else {
+            // Mouse event
+            return {
+                x: (e.clientX - rect.left) * scaleX,
+                y: (e.clientY - rect.top) * scaleY
+            };
+        }
+    }
     
     function startDrawing(e) {
         isDrawing = true;
-        const rect = canvas.getBoundingClientRect();
-        [lastX, lastY] = [
-            e.clientX - rect.left || e.touches[0].clientX - rect.left,
-            e.clientY - rect.top || e.touches[0].clientY - rect.top
-        ];
+        const coords = getCoordinates(e);
+        lastX = coords.x;
+        lastY = coords.y;
+        
+        // Prevent scrolling on touch devices
+        if (e.touches) {
+            e.preventDefault();
+        }
     }
     
     function draw(e) {
@@ -464,24 +647,21 @@ function setupSignaturePad() {
         
         e.preventDefault();
         
-        const rect = canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left || e.touches[0].clientX - rect.left;
-        const y = e.clientY - rect.top || e.touches[0].clientY - rect.top;
+        const coords = getCoordinates(e);
         
         ctx.beginPath();
         ctx.moveTo(lastX, lastY);
-        ctx.lineTo(x, y);
-        ctx.strokeStyle = '#000';
-        ctx.lineWidth = 2;
-        ctx.lineCap = 'round';
+        ctx.lineTo(coords.x, coords.y);
         ctx.stroke();
         
-        [lastX, lastY] = [x, y];
+        lastX = coords.x;
+        lastY = coords.y;
     }
     
     function stopDrawing() {
         if (isDrawing) {
             isDrawing = false;
+            // Save signature immediately
             formData.signature = canvas.toDataURL();
         }
     }
@@ -492,43 +672,64 @@ function setupSignaturePad() {
     canvas.addEventListener('mouseup', stopDrawing);
     canvas.addEventListener('mouseout', stopDrawing);
     
-    // Touch events
-    canvas.addEventListener('touchstart', startDrawing);
-    canvas.addEventListener('touchmove', draw);
+    // Touch events with passive: false to prevent default scrolling
+    canvas.addEventListener('touchstart', startDrawing, { passive: false });
+    canvas.addEventListener('touchmove', draw, { passive: false });
     canvas.addEventListener('touchend', stopDrawing);
+    canvas.addEventListener('touchcancel', stopDrawing);
     
     // Clear button
-    document.getElementById('clearSignature')?.addEventListener('click', () => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        formData.signature = null;
-    });
+    const clearBtn = document.getElementById('clearSignature');
+    if (clearBtn) {
+        // Remove existing listeners
+        const newClearBtn = clearBtn.cloneNode(true);
+        clearBtn.parentNode.replaceChild(newClearBtn, clearBtn);
+        
+        newClearBtn.addEventListener('click', () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            formData.signature = null;
+            showToast('Firma cancellata');
+        });
+    }
+    
+    console.log('Signature pad initialized successfully');
 }
 
 // Submit PIR
 function submitPIR() {
     saveFormData();
     
-    // Generate PIR reference number
-    const pirRef = generatePIRReference();
+    showToast('Invio in corso...');
     
-    // Store submission
-    const submission = {
-        reference: pirRef,
-        date: new Date().toISOString(),
-        data: formData
-    };
-    
-    localStorage.setItem('lastPIR', JSON.stringify(submission));
-    
-    // Show tracking section
-    showSection('trackingSection');
-    
-    // Update tracking info
-    document.getElementById('referenceNumber').textContent = pirRef;
-    document.getElementById('submittedDate').textContent = formatDate(submission.date);
-    
-    // Simulate tracking progress
-    simulateTracking();
+    // Simulate submission delay
+    setTimeout(() => {
+        // Generate PIR reference number
+        const pirRef = generatePIRReference();
+        
+        // Store submission
+        const submission = {
+            reference: pirRef,
+            date: new Date().toISOString(),
+            data: formData
+        };
+        
+        localStorage.setItem('lastPIR', JSON.stringify(submission));
+        
+        // Show tracking section
+        showSection('trackingSection');
+        
+        // Update tracking info
+        const refNumber = document.getElementById('referenceNumber');
+        const submittedDate = document.getElementById('submittedDate');
+        
+        if (refNumber) refNumber.textContent = pirRef;
+        if (submittedDate) submittedDate.textContent = formatDate(submission.date);
+        
+        showToast('✅ PIR inviato con successo!', 3000);
+        
+        // Simulate tracking progress
+        simulateTracking();
+    }, 1000);
 }
 
 function generatePIRReference() {
@@ -539,7 +740,8 @@ function generatePIRReference() {
 
 function formatDate(dateString) {
     const date = new Date(dateString);
-    return date.toLocaleString(getStoredLanguage());
+    const lang = getStoredLanguage();
+    return date.toLocaleString(lang === 'it' ? 'it-IT' : 'en-US');
 }
 
 function simulateTracking() {
@@ -582,6 +784,7 @@ function resetForm() {
     };
     
     currentStep = 1;
+    signaturePad = null;
     
     // Reset all inputs
     document.querySelectorAll('.form-input').forEach(input => {
@@ -639,6 +842,7 @@ function initializeDashboard() {
         }
     ];
     
+    recentPirsTable.innerHTML = '';
     sampleData.forEach(pir => {
         const row = document.createElement('tr');
         row.innerHTML = `
