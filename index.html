@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIR & CARE - Smart Baggage Management</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <i class="fas fa-suitcase-rolling"></i>
+                <span>PIR & CARE</span>
+            </div>
+            <nav class="nav">
+                <button class="lang-btn" id="langBtn">
+                    <i class="fas fa-globe"></i>
+                    <span id="currentLang">IT</span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Language Selector Modal -->
+    <div class="modal" id="langModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 data-i18n="selectLanguage">Seleziona Lingua</h3>
+                <button class="close-btn" id="closeLangModal">&times;</button>
+            </div>
+            <div class="lang-grid">
+                <button class="lang-option" data-lang="it">
+                    <i class="fas fa-flag"></i>
+                    <span>Italiano</span>
+                </button>
+                <button class="lang-option" data-lang="en">
+                    <i class="fas fa-flag"></i>
+                    <span>English</span>
+                </button>
+                <button class="lang-option" data-lang="es">
+                    <i class="fas fa-flag"></i>
+                    <span>Español</span>
+                </button>
+                <button class="lang-option" data-lang="fr">
+                    <i class="fas fa-flag"></i>
+                    <span>Français</span>
+                </button>
+                <button class="lang-option" data-lang="de">
+                    <i class="fas fa-flag"></i>
+                    <span>Deutsch</span>
+                </button>
+                <button class="lang-option" data-lang="zh">
+                    <i class="fas fa-flag"></i>
+                    <span>中文</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main">
+        <!-- Home Section -->
+        <section class="section active" id="homeSection">
+            <div class="container">
+                <div class="hero">
+                    <div class="hero-content">
+                        <h1 data-i18n="heroTitle">Il tuo bagaglio è smarrito?</h1>
+                        <p data-i18n="heroSubtitle">Compila il tuo PIR in 5 minuti con l'assistenza AI multilingue</p>
+                        <div class="hero-stats">
+                            <div class="stat">
+                                <div class="stat-number">5 min</div>
+                                <div class="stat-label" data-i18n="statTime">Tempo medio</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-number">24/7</div>
+                                <div class="stat-label" data-i18n="statSupport">Supporto</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-number">6+</div>
+                                <div class="stat-label" data-i18n="statLanguages">Lingue</div>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary btn-large" id="startBtn">
+                            <span data-i18n="startProcess">Inizia la Denuncia</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                    <div class="hero-image">
+                        <i class="fas fa-luggage-cart"></i>
+                    </div>
+                </div>
+
+                <div class="features">
+                    <h2 data-i18n="howItWorks">Come Funziona</h2>
+                    <div class="feature-grid">
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fas fa-camera"></i>
+                            </div>
+                            <h3 data-i18n="feature1Title">Scansiona Documenti</h3>
+                            <p data-i18n="feature1Desc">Carica foto di carta d'imbarco e documento</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <h3 data-i18n="feature2Title">Assistenza AI</h3>
+                            <p data-i18n="feature2Desc">Compilazione guidata in linguaggio naturale</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fas fa-signature"></i>
+                            </div>
+                            <h3 data-i18n="feature3Title">Firma Digitale</h3>
+                            <p data-i18n="feature3Desc">Firma e invia automaticamente a tutti gli stakeholder</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <h3 data-i18n="feature4Title">Tracking Real-Time</h3>
+                            <p data-i18n="feature4Desc">Monitora lo stato del rimborso in tempo reale</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PIR Form Section -->
+        <section class="section" id="pirSection">
+            <div class="container">
+                <div class="form-header">
+                    <button class="btn-back" id="backBtn">
+                        <i class="fas fa-arrow-left"></i>
+                        <span data-i18n="back">Indietro</span>
+                    </button>
+                    <h2 data-i18n="pirFormTitle">Compilazione PIR</h2>
+                    <div class="progress-indicator">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                        <div class="progress-text">
+                            <span id="currentStep">1</span> / <span id="totalSteps">5</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-container">
+                    <!-- Step 1: Document Scan -->
+                    <div class="form-step active" data-step="1">
+                        <h3 data-i18n="step1Title">Scansiona i tuoi documenti</h3>
+                        <p class="step-description" data-i18n="step1Desc">Carica foto della tua carta d'imbarco e documento d'identità</p>
+                        
+                        <div class="upload-grid">
+                            <div class="upload-box" id="boardingPassUpload">
+                                <input type="file" id="boardingPassFile" accept="image/*" hidden>
+                                <div class="upload-content">
+                                    <i class="fas fa-ticket-alt"></i>
+                                    <p data-i18n="uploadBoardingPass">Carta d'Imbarco</p>
+                                    <button class="btn btn-secondary" onclick="document.getElementById('boardingPassFile').click()">
+                                        <i class="fas fa-camera"></i>
+                                        <span data-i18n="uploadBtn">Carica</span>
+                                    </button>
+                                </div>
+                                <div class="upload-preview" style="display: none;">
+                                    <img src="" alt="Preview">
+                                    <div class="upload-success">
+                                        <i class="fas fa-check-circle"></i>
+                                        <span data-i18n="uploaded">Caricato</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="upload-box" id="idDocUpload">
+                                <input type="file" id="idDocFile" accept="image/*" hidden>
+                                <div class="upload-content">
+                                    <i class="fas fa-id-card"></i>
+                                    <p data-i18n="uploadIdDoc">Documento d'Identità</p>
+                                    <button class="btn btn-secondary" onclick="document.getElementById('idDocFile').click()">
+                                        <i class="fas fa-camera"></i>
+                                        <span data-i18n="uploadBtn">Carica</span>
+                                    </button>
+                                </div>
+                                <div class="upload-preview" style="display: none;">
+                                    <img src="" alt="Preview">
+                                    <div class="upload-success">
+                                        <i class="fas fa-check-circle"></i>
+                                        <span data-i18n="uploaded">Caricato</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="ai-extraction" id="aiExtractionInfo" style="display: none;">
+                            <div class="ai-loader">
+                                <i class="fas fa-robot fa-spin"></i>
+                                <p data-i18n="aiProcessing">AI sta estraendo i dati...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Personal Information -->
+                    <div class="form-step" data-step="2">
+                        <h3 data-i18n="step2Title">Informazioni Personali</h3>
+                        <p class="step-description" data-i18n="step2Desc">Verifica e completa i tuoi dati personali</p>
+                        
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="firstName" data-i18n="firstName">Nome</label>
+                                <input type="text" id="firstName" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="lastName" data-i18n="lastName">Cognome</label>
+                                <input type="text" id="lastName" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="email" data-i18n="email">Email</label>
+                                <input type="email" id="email" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="phone" data-i18n="phone">Telefono</label>
+                                <input type="tel" id="phone" class="form-input" required>
+                            </div>
+                            <div class="form-group full-width">
+                                <label for="address" data-i18n="address">Indirizzo Completo</label>
+                                <input type="text" id="address" class="form-input" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Flight Information -->
+                    <div class="form-step" data-step="3">
+                        <h3 data-i18n="step3Title">Informazioni Volo</h3>
+                        <p class="step-description" data-i18n="step3Desc">Dettagli del tuo volo</p>
+                        
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="airline" data-i18n="airline">Compagnia Aerea</label>
+                                <input type="text" id="airline" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="flightNumber" data-i18n="flightNumber">Numero Volo</label>
+                                <input type="text" id="flightNumber" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="flightDate" data-i18n="flightDate">Data Volo</label>
+                                <input type="date" id="flightDate" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="pnr" data-i18n="pnr">Codice Prenotazione (PNR)</label>
+                                <input type="text" id="pnr" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="departure" data-i18n="departure">Aeroporto Partenza</label>
+                                <input type="text" id="departure" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="arrival" data-i18n="arrival">Aeroporto Arrivo</label>
+                                <input type="text" id="arrival" class="form-input" value="FCO - Roma Fiumicino" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 4: Baggage Description -->
+                    <div class="form-step" data-step="4">
+                        <h3 data-i18n="step4Title">Descrizione Bagaglio</h3>
+                        <p class="step-description" data-i18n="step4Desc">Fornisci i dettagli del bagaglio smarrito</p>
+                        
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="baggageTag" data-i18n="baggageTag">Etichetta Bagaglio</label>
+                                <input type="text" id="baggageTag" class="form-input" placeholder="10 cifre">
+                            </div>
+                            <div class="form-group">
+                                <label for="baggageType" data-i18n="baggageType">Tipo</label>
+                                <select id="baggageType" class="form-input">
+                                    <option value="suitcase">Valigia</option>
+                                    <option value="backpack">Zaino</option>
+                                    <option value="duffel">Borsone</option>
+                                    <option value="other">Altro</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="baggageColor" data-i18n="baggageColor">Colore</label>
+                                <input type="text" id="baggageColor" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label for="baggageBrand" data-i18n="baggageBrand">Marca</label>
+                                <input type="text" id="baggageBrand" class="form-input">
+                            </div>
+                            <div class="form-group full-width">
+                                <label for="baggageDescription" data-i18n="baggageDescription">Descrizione Dettagliata</label>
+                                <textarea id="baggageDescription" class="form-input" rows="4" placeholder="Segni particolari, adesivi, danni..."></textarea>
+                            </div>
+                            <div class="form-group full-width">
+                                <label for="baggageContents" data-i18n="baggageContents">Contenuto Principale</label>
+                                <textarea id="baggageContents" class="form-input" rows="3" placeholder="Abbigliamento, elettronica, documenti..."></textarea>
+                            </div>
+                        </div>
+
+                        <div class="upload-box">
+                            <input type="file" id="baggagePhoto" accept="image/*" multiple hidden>
+                            <div class="upload-content">
+                                <i class="fas fa-images"></i>
+                                <p data-i18n="uploadBaggagePhotos">Foto del Bagaglio (opzionale)</p>
+                                <button class="btn btn-secondary" onclick="document.getElementById('baggagePhoto').click()">
+                                    <i class="fas fa-camera"></i>
+                                    <span data-i18n="uploadBtn">Carica</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 5: Review and Submit -->
+                    <div class="form-step" data-step="5">
+                        <h3 data-i18n="step5Title">Revisione e Firma</h3>
+                        <p class="step-description" data-i18n="step5Desc">Controlla i dati e firma digitalmente</p>
+                        
+                        <div class="review-section">
+                            <h4 data-i18n="reviewPersonal">Dati Personali</h4>
+                            <div class="review-grid" id="reviewPersonal"></div>
+                        </div>
+
+                        <div class="review-section">
+                            <h4 data-i18n="reviewFlight">Dati Volo</h4>
+                            <div class="review-grid" id="reviewFlight"></div>
+                        </div>
+
+                        <div class="review-section">
+                            <h4 data-i18n="reviewBaggage">Dati Bagaglio</h4>
+                            <div class="review-grid" id="reviewBaggage"></div>
+                        </div>
+
+                        <div class="signature-section">
+                            <h4 data-i18n="digitalSignature">Firma Digitale</h4>
+                            <div class="signature-pad">
+                                <canvas id="signaturePad"></canvas>
+                                <button class="btn btn-secondary btn-small" id="clearSignature">
+                                    <i class="fas fa-eraser"></i>
+                                    <span data-i18n="clear">Cancella</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="terms-section">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="termsAccept" required>
+                                <span data-i18n="termsText">Accetto i termini e condizioni e autorizzo il trattamento dei dati personali secondo il GDPR</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button class="btn btn-secondary" id="prevStepBtn" style="display: none;">
+                        <i class="fas fa-arrow-left"></i>
+                        <span data-i18n="previous">Precedente</span>
+                    </button>
+                    <button class="btn btn-primary" id="nextStepBtn">
+                        <span data-i18n="next">Successivo</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                    <button class="btn btn-success" id="submitBtn" style="display: none;">
+                        <i class="fas fa-check"></i>
+                        <span data-i18n="submit">Invia PIR</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tracking Section -->
+        <section class="section" id="trackingSection">
+            <div class="container">
+                <button class="btn-back" id="backToHomeBtn">
+                    <i class="fas fa-arrow-left"></i>
+                    <span data-i18n="backHome">Torna alla Home</span>
+                </button>
+
+                <div class="success-message">
+                    <i class="fas fa-check-circle"></i>
+                    <h2 data-i18n="pirSubmitted">PIR Inviato con Successo!</h2>
+                    <p data-i18n="pirReference">Il tuo numero di riferimento è:</p>
+                    <div class="reference-number" id="referenceNumber">PIR-FCO-2024-001234</div>
+                </div>
+
+                <div class="tracking-container">
+                    <h3 data-i18n="trackingTitle">Stato della Pratica</h3>
+                    
+                    <div class="timeline">
+                        <div class="timeline-item completed">
+                            <div class="timeline-icon">
+                                <i class="fas fa-file-alt"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h4 data-i18n="timelineSubmitted">PIR Ricevuto</h4>
+                                <p class="timeline-date" id="submittedDate"></p>
+                                <p data-i18n="timelineSubmittedDesc">La tua denuncia è stata ricevuta e registrata</p>
+                            </div>
+                        </div>
+
+                        <div class="timeline-item active">
+                            <div class="timeline-icon">
+                                <i class="fas fa-search"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h4 data-i18n="timelineSearching">Ricerca in Corso</h4>
+                                <p data-i18n="timelineSearchingDesc">Stiamo cercando il tuo bagaglio nel nostro sistema</p>
+                                <div class="progress-bar-small">
+                                    <div class="progress-fill-small" style="width: 60%;"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="timeline-item">
+                            <div class="timeline-icon">
+                                <i class="fas fa-box"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h4 data-i18n="timelineFound">Bagaglio Trovato</h4>
+                                <p data-i18n="timelineFoundDesc">Il bagaglio è stato localizzato</p>
+                            </div>
+                        </div>
+
+                        <div class="timeline-item">
+                            <div class="timeline-icon">
+                                <i class="fas fa-shipping-fast"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h4 data-i18n="timelineShipping">In Consegna</h4>
+                                <p data-i18n="timelineShippingDesc">Il bagaglio è in viaggio verso di te</p>
+                            </div>
+                        </div>
+
+                        <div class="timeline-item">
+                            <div class="timeline-icon">
+                                <i class="fas fa-home"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h4 data-i18n="timelineDelivered">Consegnato</h4>
+                                <p data-i18n="timelineDeliveredDesc">Il bagaglio è stato consegnato</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-cards">
+                        <div class="info-card">
+                            <i class="fas fa-clock"></i>
+                            <h4 data-i18n="estimatedTime">Tempo Stimato</h4>
+                            <p>48-72 ore</p>
+                        </div>
+                        <div class="info-card">
+                            <i class="fas fa-phone"></i>
+                            <h4 data-i18n="support">Supporto</h4>
+                            <p>+39 06 65951</p>
+                        </div>
+                        <div class="info-card">
+                            <i class="fas fa-envelope"></i>
+                            <h4 data-i18n="emailSupport">Email</h4>
+                            <p>support@pircare.com</p>
+                        </div>
+                    </div>
+
+                    <div class="compensation-section">
+                        <h3 data-i18n="compensationTitle">Richiesta Rimborso Spese</h3>
+                        <p data-i18n="compensationDesc">Se hai sostenuto spese per beni di prima necessità, puoi richiedere il rimborso (fino a €1,414 secondo la Convenzione di Montreal)</p>
+                        <button class="btn btn-primary" id="requestCompensation">
+                            <i class="fas fa-money-bill"></i>
+                            <span data-i18n="requestCompensationBtn">Richiedi Rimborso</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dashboard Section (for ADR operators) -->
+        <section class="section" id="dashboardSection">
+            <div class="container">
+                <h2 data-i18n="dashboardTitle">Dashboard Analytics</h2>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-card-icon">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <div class="stat-card-content">
+                            <h4 data-i18n="totalPirs">PIR Totali</h4>
+                            <p class="stat-card-number">6,300</p>
+                            <span class="stat-card-change positive">+5% vs mese scorso</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-card-content">
+                            <h4 data-i18n="avgTime">Tempo Medio</h4>
+                            <p class="stat-card-number">5.2 min</p>
+                            <span class="stat-card-change negative">-80% vs processo tradizionale</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stat-card-content">
+                            <h4 data-i18n="resolvedCases">Casi Risolti</h4>
+                            <p class="stat-card-number">5,800</p>
+                            <span class="stat-card-change positive">92% tasso successo</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-icon">
+                            <i class="fas fa-euro-sign"></i>
+                        </div>
+                        <div class="stat-card-content">
+                            <h4 data-i18n="revenue">Revenue</h4>
+                            <p class="stat-card-number">€520K</p>
+                            <span class="stat-card-change positive">+15% vs target</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <h3 data-i18n="pirsByMonth">PIR per Mese</h3>
+                        <canvas id="pirsByMonthChart"></canvas>
+                    </div>
+
+                    <div class="chart-card">
+                        <h3 data-i18n="pirsByAirline">PIR per Compagnia</h3>
+                        <canvas id="pirsByAirlineChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="recent-pirs">
+                    <h3 data-i18n="recentPirs">PIR Recenti</h3>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Riferimento</th>
+                                    <th>Passeggero</th>
+                                    <th>Volo</th>
+                                    <th>Data</th>
+                                    <th>Stato</th>
+                                    <th>Azioni</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentPirsTable">
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>PIR & CARE</h4>
+                    <p data-i18n="footerDesc">La prima piattaforma digitale per la gestione intelligente dei bagagli smarriti</p>
+                </div>
+                <div class="footer-section">
+                    <h4 data-i18n="footerContact">Contatti</h4>
+                    <p>Aeroporti di Roma</p>
+                    <p>Via Pier Paolo Racchetti, 1</p>
+                    <p>00054 Fiumicino (Roma)</p>
+                </div>
+                <div class="footer-section">
+                    <h4 data-i18n="footerLinks">Link Utili</h4>
+                    <a href="#" data-i18n="privacy">Privacy Policy</a>
+                    <a href="#" data-i18n="terms">Termini e Condizioni</a>
+                    <a href="#" data-i18n="cookies">Cookie Policy</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Aeroporti di Roma S.p.A. - Hangar Program</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="translations.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
