@@ -989,7 +989,7 @@ function initializeCharts() {
         new Chart(pirsByAirlineCtx, {
             type: 'doughnut',
             data: {
-                labels: ['Hangar Program', 'Alitalia', 'Ryanair', 'Lufthansa', 'Altri'],
+                labels: ['Hangar Program', 'Ryanair', 'Lufthansa', 'Altri'],
                 datasets: [{
                     data: [30, 25, 20, 15, 10],
                     backgroundColor: [
