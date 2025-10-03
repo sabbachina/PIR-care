@@ -1,4 +1,41 @@
-// PIR & CARE Application Logic - FIXED FOR MOBILE
+// PIR & CARE Application Logic - WITH AUTOMATIC PDF DATA EXTRACTION
+
+// ========================================
+// DATI ESTRATTI DAI PDF CARICATI
+// ========================================
+const extractedPDFData = {
+    // Da Carta d'Identità (Print___Home__1_.pdf)
+    identity: {
+        firstName: "ADRYX",
+        lastName: "FCO",
+        address: "Via Pierpaolo Racchetti 1, Fiumicino",
+        birthDate: "1961-01-15",
+        nationality: "ITA",
+        height: "180",
+        weight: "80",
+        eyeColor: "BLU",
+        sex: "M",
+        issueDate: "2025-10-06",
+        expiryDate: "2047-12-31"
+    },
+    // Da Boarding Pass (17603__Convertito___Recuperato_.pdf)
+    boardingPass: {
+        flightNumber: "PRC001",
+        flightDate: "2025-07-18",
+        flightTime: "17:27",
+        departureAirport: "MRX",
+        departureName: "MARS",
+        arrivalAirport: "FCO",
+        arrivalName: "ROME",
+        gate: "F01",
+        seat: "1A",
+        baggageTag: "2378650917",
+        airline: "HANGAR PROGRAM",
+        passengerName: "ADRYX FCO",
+        boardingTime: "16:42",
+        serviceClass: "PIR & CARE"
+    }
+};
 
 // Global state
 let currentStep = 1;
@@ -10,7 +47,8 @@ let formData = {
     baggage: {},
     signature: null
 };
-let signaturePad = null; // Global reference
+let signaturePad = null;
+let documentsUploaded = { boardingPass: false, idDoc: false };
 
 // DOM Ready
 document.addEventListener('DOMContentLoaded', function() {
@@ -167,13 +205,11 @@ function setupLanguageListeners() {
 
 // Toast notification for better UX
 function showToast(message, duration = 3000) {
-    // Remove existing toast
     const existingToast = document.querySelector('.toast-notification');
     if (existingToast) {
         existingToast.remove();
     }
     
-    // Create toast
     const toast = document.createElement('div');
     toast.className = 'toast-notification';
     toast.textContent = message;
@@ -196,7 +232,6 @@ function showToast(message, duration = 3000) {
     
     document.body.appendChild(toast);
     
-    // Add animation
     const style = document.createElement('style');
     style.textContent = `
         @keyframes slideUp {
@@ -215,7 +250,6 @@ function showToast(message, duration = 3000) {
         document.head.appendChild(style);
     }
     
-    // Remove after duration
     setTimeout(() => {
         toast.style.animation = 'slideUp 0.3s ease reverse';
         setTimeout(() => {
@@ -224,7 +258,7 @@ function showToast(message, duration = 3000) {
     }, duration);
 }
 
-// File Upload Handler
+// File Upload Handler - ENHANCED WITH AUTO-FILL
 function handleFileUpload(event, type, containerId) {
     const file = event.target.files[0];
     if (!file) return;
@@ -249,30 +283,44 @@ function handleFileUpload(event, type, containerId) {
     showAIExtraction();
     showToast('Caricamento documento...');
     
-    // Simulate file reading
     const reader = new FileReader();
     reader.onload = function(e) {
-        // Store in form data
         formData.documents[type] = {
             file: file,
             dataUrl: e.target.result
         };
         
-        // Show preview
+        // Mark as uploaded
+        documentsUploaded[type] = true;
+        
         setTimeout(() => {
             uploadContent.style.display = 'none';
             uploadPreview.style.display = 'block';
             uploadPreview.querySelector('img').src = e.target.result;
             
-            showToast('Documento caricato!');
+            showToast('Documento caricato con successo!');
             
-            // Simulate AI extraction
+            // Simulate AI extraction with realistic delay
             setTimeout(() => {
                 extractDataFromDocument(type);
                 hideAIExtraction();
-                showToast('Dati estratti automaticamente!');
-            }, 1500);
-        }, 500);
+                
+                // Check if both documents are uploaded for full auto-fill
+                if (documentsUploaded.boardingPass && documentsUploaded.idDoc) {
+                    showToast('✅ Dati estratti automaticamente dai documenti!', 4000);
+                    // Auto-advance to personal info after extraction
+                    setTimeout(() => {
+                        if (currentStep === 1) {
+                            currentStep = 2;
+                            showStep(currentStep);
+                            updateProgress();
+                        }
+                    }, 1000);
+                } else {
+                    showToast('Dati estratti! Carica l\'altro documento per continuare');
+                }
+            }, 2000);
+        }, 800);
     };
     
     reader.onerror = function() {
@@ -283,23 +331,105 @@ function handleFileUpload(event, type, containerId) {
     reader.readAsDataURL(file);
 }
 
-// Simulate AI data extraction
+// ========================================
+// ENHANCED AI DATA EXTRACTION WITH ANIMATION
+// ========================================
 function extractDataFromDocument(type) {
     if (type === 'boardingPass') {
-        // Simulate extracted data from boarding pass
-        document.getElementById('airline').value = 'Hangar Program';
-        document.getElementById('flightNumber').value = 'PR00001';
-        document.getElementById('departure').value = 'MRX - Mars';
-        document.getElementById('arrival').value = 'FCO - Roma Fiumicino';
-        document.getElementById('pnr').value = 'SDTRB';
+        // Extract and animate boarding pass data
+        const fields = [
+            { id: 'airline', value: extractedPDFData.boardingPass.airline, delay: 300 },
+            { id: 'flightNumber', value: extractedPDFData.boardingPass.flightNumber, delay: 500 },
+            { id: 'flightDate', value: extractedPDFData.boardingPass.flightDate, delay: 700 },
+            { id: 'departure', value: `${extractedPDFData.boardingPass.departureAirport} - ${extractedPDFData.boardingPass.departureName}`, delay: 900 },
+            { id: 'arrival', value: `${extractedPDFData.boardingPass.arrivalAirport} - ${extractedPDFData.boardingPass.arrivalName}`, delay: 1100 },
+            { id: 'baggageTag', value: extractedPDFData.boardingPass.baggageTag, delay: 1300 }
+        ];
         
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('flightDate').value = today;
+        fields.forEach(field => {
+            setTimeout(() => {
+                const element = document.getElementById(field.id);
+                if (element) {
+                    element.value = field.value;
+                    animateFieldFill(element);
+                }
+            }, field.delay);
+        });
+        
+        // Also pre-fill PNR with passenger name
+        setTimeout(() => {
+            const pnrElement = document.getElementById('pnr');
+            if (pnrElement && !pnrElement.value) {
+                pnrElement.value = 'ADRYXFCO';
+                animateFieldFill(pnrElement);
+            }
+        }, 1500);
+        
     } else if (type === 'idDoc') {
-        // Simulate extracted data from ID
-        document.getElementById('firstName').value = 'Adryx';
-        document.getElementById('lastName').value = 'FCO';
+        // Extract and animate ID document data
+        const fields = [
+            { id: 'firstName', value: extractedPDFData.identity.firstName, delay: 300 },
+            { id: 'lastName', value: extractedPDFData.identity.lastName, delay: 500 },
+            { id: 'address', value: extractedPDFData.identity.address, delay: 700 }
+        ];
+        
+        fields.forEach(field => {
+            setTimeout(() => {
+                const element = document.getElementById(field.id);
+                if (element) {
+                    element.value = field.value;
+                    animateFieldFill(element);
+                }
+            }, field.delay);
+        });
+        
+        // Pre-fill email and phone with realistic data
+        setTimeout(() => {
+            const emailElement = document.getElementById('email');
+            if (emailElement && !emailElement.value) {
+                emailElement.value = 'adryx.fco@pircare.com';
+                animateFieldFill(emailElement);
+            }
+        }, 900);
+        
+        setTimeout(() => {
+            const phoneElement = document.getElementById('phone');
+            if (phoneElement && !phoneElement.value) {
+                phoneElement.value = '+39 06 65951234';
+                animateFieldFill(phoneElement);
+            }
+        }, 1100);
     }
+}
+
+// Animate field when auto-filled
+function animateFieldFill(element) {
+    element.style.backgroundColor = '#d4edda';
+    element.style.borderColor = '#28a745';
+    element.style.transition = 'all 0.3s ease';
+    
+    // Add a pulse animation
+    element.style.animation = 'fieldPulse 0.5s ease';
+    
+    // Add animation keyframes if not exists
+    if (!document.getElementById('field-animation-style')) {
+        const style = document.createElement('style');
+        style.id = 'field-animation-style';
+        style.textContent = `
+            @keyframes fieldPulse {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.02); box-shadow: 0 0 10px rgba(40, 167, 69, 0.3); }
+                100% { transform: scale(1); }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    // Reset background after a delay
+    setTimeout(() => {
+        element.style.backgroundColor = '#f8f9fa';
+        element.style.borderColor = '#28a745';
+    }, 3000);
 }
 
 function showAIExtraction() {
@@ -318,18 +448,15 @@ function hideAIExtraction() {
 
 // Step Navigation
 function showStep(step) {
-    // Hide all steps
     document.querySelectorAll('.form-step').forEach(s => {
         s.classList.remove('active');
     });
     
-    // Show current step
     const currentStepEl = document.querySelector(`.form-step[data-step="${step}"]`);
     if (currentStepEl) {
         currentStepEl.classList.add('active');
     }
     
-    // Update buttons
     const prevBtn = document.getElementById('prevStepBtn');
     const nextBtn = document.getElementById('nextStepBtn');
     const submitBtn = document.getElementById('submitBtn');
@@ -349,7 +476,6 @@ function showStep(step) {
         submitBtn.style.display = 'none';
     }
     
-    // Scroll to top of form
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -387,7 +513,6 @@ function validateStep(step) {
                 }
             }
             
-            // Validate email
             const email = document.getElementById('email')?.value;
             if (email && !email.includes('@')) {
                 isValid = false;
@@ -417,9 +542,7 @@ function validateStep(step) {
             break;
             
         case 5:
-            // Check signature
             if (!formData.signature) {
-                // Try to get it from canvas
                 if (signaturePad && signaturePad.canvas) {
                     const canvas = signaturePad.canvas;
                     const ctx = signaturePad.ctx;
@@ -438,7 +561,6 @@ function validateStep(step) {
                 }
             }
             
-            // Check terms
             const termsAccept = document.getElementById('termsAccept')?.checked;
             if (!termsAccept && isValid) {
                 isValid = false;
@@ -456,7 +578,6 @@ function validateStep(step) {
 
 // Save Form Data
 function saveFormData() {
-    // Personal data
     formData.personal = {
         firstName: document.getElementById('firstName')?.value || '',
         lastName: document.getElementById('lastName')?.value || '',
@@ -465,7 +586,6 @@ function saveFormData() {
         address: document.getElementById('address')?.value || ''
     };
     
-    // Flight data
     formData.flight = {
         airline: document.getElementById('airline')?.value || '',
         flightNumber: document.getElementById('flightNumber')?.value || '',
@@ -475,7 +595,6 @@ function saveFormData() {
         arrival: document.getElementById('arrival')?.value || ''
     };
     
-    // Baggage data
     formData.baggage = {
         tag: document.getElementById('baggageTag')?.value || '',
         type: document.getElementById('baggageType')?.value || '',
@@ -492,7 +611,6 @@ function populateReview() {
     
     const lang = getStoredLanguage();
     
-    // Personal data review
     const reviewPersonal = document.getElementById('reviewPersonal');
     if (reviewPersonal) {
         reviewPersonal.innerHTML = `
@@ -515,7 +633,6 @@ function populateReview() {
         `;
     }
     
-    // Flight data review
     const reviewFlight = document.getElementById('reviewFlight');
     if (reviewFlight) {
         reviewFlight.innerHTML = `
@@ -538,7 +655,6 @@ function populateReview() {
         `;
     }
     
-    // Baggage data review
     const reviewBaggage = document.getElementById('reviewBaggage');
     if (reviewBaggage) {
         reviewBaggage.innerHTML = `
@@ -558,7 +674,7 @@ function populateReview() {
     }
 }
 
-// Signature Pad Setup - COMPLETELY REWRITTEN FOR MOBILE
+// Signature Pad Setup - MOBILE OPTIMIZED
 function setupSignaturePad() {
     const canvas = document.getElementById('signaturePad');
     if (!canvas) {
@@ -571,39 +687,31 @@ function setupSignaturePad() {
     let lastX = 0;
     let lastY = 0;
     
-    // Store reference globally
     signaturePad = { canvas, ctx };
     
-    // Responsive canvas sizing
     function resizeCanvas() {
         const container = canvas.parentElement;
         const rect = container.getBoundingClientRect();
         
-        // Save current drawing
         const tempCanvas = document.createElement('canvas');
         const tempCtx = tempCanvas.getContext('2d');
         tempCanvas.width = canvas.width;
         tempCanvas.height = canvas.height;
         tempCtx.drawImage(canvas, 0, 0);
         
-        // Resize canvas
-        canvas.width = Math.floor(rect.width - 4); // -4 for border
+        canvas.width = Math.floor(rect.width - 4);
         canvas.height = window.innerWidth < 768 ? 150 : 200;
         
-        // Restore drawing
         ctx.drawImage(tempCanvas, 0, 0);
         
-        // Set line style
         ctx.strokeStyle = '#000';
         ctx.lineWidth = 2;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
     }
     
-    // Initial resize
     resizeCanvas();
     
-    // Resize on window resize with debounce
     let resizeTimeout;
     window.addEventListener('resize', () => {
         clearTimeout(resizeTimeout);
@@ -616,13 +724,11 @@ function setupSignaturePad() {
         const scaleY = canvas.height / rect.height;
         
         if (e.touches && e.touches.length > 0) {
-            // Touch event
             return {
                 x: (e.touches[0].clientX - rect.left) * scaleX,
                 y: (e.touches[0].clientY - rect.top) * scaleY
             };
         } else {
-            // Mouse event
             return {
                 x: (e.clientX - rect.left) * scaleX,
                 y: (e.clientY - rect.top) * scaleY
@@ -636,7 +742,6 @@ function setupSignaturePad() {
         lastX = coords.x;
         lastY = coords.y;
         
-        // Prevent scrolling on touch devices
         if (e.touches) {
             e.preventDefault();
         }
@@ -661,27 +766,22 @@ function setupSignaturePad() {
     function stopDrawing() {
         if (isDrawing) {
             isDrawing = false;
-            // Save signature immediately
             formData.signature = canvas.toDataURL();
         }
     }
     
-    // Mouse events
     canvas.addEventListener('mousedown', startDrawing);
     canvas.addEventListener('mousemove', draw);
     canvas.addEventListener('mouseup', stopDrawing);
     canvas.addEventListener('mouseout', stopDrawing);
     
-    // Touch events with passive: false to prevent default scrolling
     canvas.addEventListener('touchstart', startDrawing, { passive: false });
     canvas.addEventListener('touchmove', draw, { passive: false });
     canvas.addEventListener('touchend', stopDrawing);
     canvas.addEventListener('touchcancel', stopDrawing);
     
-    // Clear button
     const clearBtn = document.getElementById('clearSignature');
     if (clearBtn) {
-        // Remove existing listeners
         const newClearBtn = clearBtn.cloneNode(true);
         clearBtn.parentNode.replaceChild(newClearBtn, clearBtn);
         
@@ -691,8 +791,6 @@ function setupSignaturePad() {
             showToast('Firma cancellata');
         });
     }
-    
-    console.log('Signature pad initialized successfully');
 }
 
 // Submit PIR
@@ -701,24 +799,20 @@ function submitPIR() {
     
     showToast('Invio in corso...');
     
-    // Simulate submission delay
     setTimeout(() => {
-        // Generate PIR reference number
         const pirRef = generatePIRReference();
         
-        // Store submission
         const submission = {
             reference: pirRef,
             date: new Date().toISOString(),
-            data: formData
+            data: formData,
+            extractedData: extractedPDFData // Include extracted data for reference
         };
         
         localStorage.setItem('lastPIR', JSON.stringify(submission));
         
-        // Show tracking section
         showSection('trackingSection');
         
-        // Update tracking info
         const refNumber = document.getElementById('referenceNumber');
         const submittedDate = document.getElementById('submittedDate');
         
@@ -727,7 +821,6 @@ function submitPIR() {
         
         showToast('✅ PIR inviato con successo!', 3000);
         
-        // Simulate tracking progress
         simulateTracking();
     }, 1000);
 }
@@ -745,7 +838,6 @@ function formatDate(dateString) {
 }
 
 function simulateTracking() {
-    // Simulate different statuses over time
     setTimeout(() => {
         const timelineItems = document.querySelectorAll('.timeline-item');
         if (timelineItems[2]) {
@@ -758,18 +850,15 @@ function simulateTracking() {
 
 // Section Management
 function showSection(sectionId) {
-    // Hide all sections
     document.querySelectorAll('.section').forEach(section => {
         section.classList.remove('active');
     });
     
-    // Show target section
     const targetSection = document.getElementById(sectionId);
     if (targetSection) {
         targetSection.classList.add('active');
     }
     
-    // Scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -785,13 +874,14 @@ function resetForm() {
     
     currentStep = 1;
     signaturePad = null;
+    documentsUploaded = { boardingPass: false, idDoc: false };
     
-    // Reset all inputs
     document.querySelectorAll('.form-input').forEach(input => {
         input.value = '';
+        input.style.backgroundColor = '';
+        input.style.borderColor = '';
     });
     
-    // Reset file uploads
     document.querySelectorAll('.upload-box').forEach(box => {
         const uploadContent = box.querySelector('.upload-content');
         const uploadPreview = box.querySelector('.upload-preview');
@@ -800,25 +890,29 @@ function resetForm() {
         if (uploadPreview) uploadPreview.style.display = 'none';
     });
     
-    // Clear signature
     const canvas = document.getElementById('signaturePad');
     if (canvas) {
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
     
-    // Reset checkbox
     const termsAccept = document.getElementById('termsAccept');
     if (termsAccept) termsAccept.checked = false;
 }
 
-// Dashboard Initialization (for demo purposes)
+// Dashboard Initialization
 function initializeDashboard() {
-    // Populate recent PIRs table
     const recentPirsTable = document.getElementById('recentPirsTable');
     if (!recentPirsTable) return;
     
     const sampleData = [
+        {
+            ref: 'PIR-FCO-2025-347820',
+            passenger: 'ADRYX FCO',
+            flight: 'PRC001',
+            date: '2025-07-18',
+            status: 'delivered'
+        },
         {
             ref: 'PIR-FCO-2024-001234',
             passenger: 'Mario Rossi',
@@ -838,13 +932,6 @@ function initializeDashboard() {
             passenger: 'Giovanni Verdi',
             flight: 'LH9876',
             date: '2024-01-13',
-            status: 'delivered'
-        },
-        {
-            ref: 'PIR-FCO-2025-347820',
-            passenger: 'Adryx FCO',
-            flight: 'PR00001',
-            date: '2025-10-03',
             status: 'delivered'
         }
     ];
@@ -867,12 +954,10 @@ function initializeDashboard() {
         recentPirsTable.appendChild(row);
     });
     
-    // Initialize charts
     initializeCharts();
 }
 
 function initializeCharts() {
-    // PIRs by Month Chart
     const pirsByMonthCtx = document.getElementById('pirsByMonthChart');
     if (pirsByMonthCtx && typeof Chart !== 'undefined') {
         new Chart(pirsByMonthCtx, {
@@ -881,7 +966,7 @@ function initializeCharts() {
                 labels: ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set'],
                 datasets: [{
                     label: 'PIR Totali',
-                    data: [450, 520, 480, 580, 620, 650, 450, 890, 450],
+                    data: [450, 520, 480, 580, 620, 650, 700, 890, 950],
                     borderColor: '#0066cc',
                     backgroundColor: 'rgba(0, 102, 204, 0.1)',
                     tension: 0.4
@@ -899,13 +984,12 @@ function initializeCharts() {
         });
     }
     
-    // PIRs by Airline Chart
     const pirsByAirlineCtx = document.getElementById('pirsByAirlineChart');
     if (pirsByAirlineCtx && typeof Chart !== 'undefined') {
         new Chart(pirsByAirlineCtx, {
             type: 'doughnut',
             data: {
-                labels: ['Hangar Program', 'Ryanair', 'Lufthansa', 'Air France', 'Altri'],
+                labels: ['Hangar Program', 'Alitalia', 'Ryanair', 'Lufthansa', 'Altri'],
                 datasets: [{
                     data: [30, 25, 20, 15, 10],
                     backgroundColor: [
@@ -925,7 +1009,6 @@ function initializeCharts() {
     }
 }
 
-// Initialize dashboard if on that section
 if (window.location.hash === '#dashboard') {
     setTimeout(initializeDashboard, 500);
 }
