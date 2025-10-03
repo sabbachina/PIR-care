@@ -287,18 +287,18 @@ function handleFileUpload(event, type, containerId) {
 function extractDataFromDocument(type) {
     if (type === 'boardingPass') {
         // Simulate extracted data from boarding pass
-        document.getElementById('airline').value = 'Alitalia';
-        document.getElementById('flightNumber').value = 'AZ1234';
-        document.getElementById('departure').value = 'MXP - Milano Malpensa';
+        document.getElementById('airline').value = 'Hangar Program';
+        document.getElementById('flightNumber').value = 'PR00001';
+        document.getElementById('departure').value = 'MRX - Mars';
         document.getElementById('arrival').value = 'FCO - Roma Fiumicino';
-        document.getElementById('pnr').value = 'ABC123';
+        document.getElementById('pnr').value = 'SDTRB';
         
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('flightDate').value = today;
     } else if (type === 'idDoc') {
         // Simulate extracted data from ID
-        document.getElementById('firstName').value = 'Mario';
-        document.getElementById('lastName').value = 'Rossi';
+        document.getElementById('firstName').value = 'Adryx';
+        document.getElementById('lastName').value = 'FCO';
     }
 }
 
@@ -839,6 +839,13 @@ function initializeDashboard() {
             flight: 'LH9876',
             date: '2024-01-13',
             status: 'delivered'
+        },
+        {
+            ref: 'PIR-FCO-2025-347820',
+            passenger: 'Adryx FCO',
+            flight: 'PR00001',
+            date: '2025-10-03',
+            status: 'delivered'
         }
     ];
     
@@ -871,10 +878,10 @@ function initializeCharts() {
         new Chart(pirsByMonthCtx, {
             type: 'line',
             data: {
-                labels: ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu'],
+                labels: ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set'],
                 datasets: [{
                     label: 'PIR Totali',
-                    data: [450, 520, 480, 580, 620, 650],
+                    data: [450, 520, 480, 580, 620, 650, 450, 890, 450],
                     borderColor: '#0066cc',
                     backgroundColor: 'rgba(0, 102, 204, 0.1)',
                     tension: 0.4
@@ -898,7 +905,7 @@ function initializeCharts() {
         new Chart(pirsByAirlineCtx, {
             type: 'doughnut',
             data: {
-                labels: ['Alitalia', 'Ryanair', 'Lufthansa', 'Air France', 'Altri'],
+                labels: ['Hangar Program', 'Ryanair', 'Lufthansa', 'Air France', 'Altri'],
                 datasets: [{
                     data: [30, 25, 20, 15, 10],
                     backgroundColor: [
