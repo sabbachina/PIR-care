@@ -387,7 +387,7 @@ function extractDataFromDocument(type) {
         setTimeout(() => {
             const emailElement = document.getElementById('email');
             if (emailElement && !emailElement.value) {
-                emailElement.value = 'adryx.fco@pircare.com';
+                emailElement.value = ' ';
                 animateFieldFill(emailElement);
             }
         }, 900);
@@ -395,7 +395,7 @@ function extractDataFromDocument(type) {
         setTimeout(() => {
             const phoneElement = document.getElementById('phone');
             if (phoneElement && !phoneElement.value) {
-                phoneElement.value = '+39 06 65951234';
+                phoneElement.value = ' ';
                 animateFieldFill(phoneElement);
             }
         }, 1100);
